@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useParams } from 'wouter';
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Clock3, Mail, MessageCircle, MessageSquareText, ShieldAlert, ShieldCheck, Smartphone, Target, TriangleAlert } from 'lucide-react';
 import { getGetDashboardQueryKey, getGetNextScenarioQueryKey, getGetSessionQueryKey, useGetNextScenario, useGetSession, useSubmitAttempt } from '@workspace/api-client-react';
-import type { Answer } from '@workspace/api-client-react';
+import type { Answer, RedFlag } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
 import { ErrorState, InlineNotice, PageLoading, titleCase } from '@/components/scamlens-ui';
 
@@ -12,7 +12,7 @@ const answerOptions: { value: Answer; title: string; description: string }[] = [
   { value: 'legitimate', title: 'Likely legitimate', description: 'The request and context appear expected.' },
   { value: 'unsure', title: 'I am not sure yet', description: 'I would pause and verify before acting.' },
 ];
-const signalOptions = ['Unexpected urgency', 'Unfamiliar sender', 'Mismatched or unusual address', 'Sensitive information requested', 'Unexpected attachment or link', 'Unusual payment or account request'];
+const signalOptions: RedFlag[] = ['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'];
 const channelIcon = { email: Mail, sms: Smartphone, chat: MessageCircle, social: MessageSquareText, login: ShieldCheck };
 
 export default function TrainingPage() {
@@ -24,7 +24,7 @@ export default function TrainingPage() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [answer, setAnswer] = useState<Answer | null>(null);
-  const [flags, setFlags] = useState<string[]>([]);
+  const [flags, setFlags] = useState<RedFlag[]>([]);
   const [error, setError] = useState('');
   const [advancing, setAdvancing] = useState(false);
   const startedAt = useRef(Date.now());
@@ -43,7 +43,7 @@ export default function TrainingPage() {
   const assessment = activeSession?.type === 'baseline' || activeSession?.type === 'final';
   const ChannelIcon = scenario ? channelIcon[scenario.channel] : Mail;
 
-  function toggleFlag(flag: string) {
+  function toggleFlag(flag: RedFlag) {
     setFlags((current) => current.includes(flag) ? current.filter((item) => item !== flag) : current.length < 8 ? [...current, flag] : current);
   }
   function submit(event: FormEvent<HTMLFormElement>) {

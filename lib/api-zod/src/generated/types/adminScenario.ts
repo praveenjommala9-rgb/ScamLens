@@ -6,11 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Answer } from './answer';
+import type { RedFlag } from './redFlag';
 import type { SafeScenario } from './safeScenario';
 
 export type AdminScenario = SafeScenario & {
   correct_answer: Answer;
-  red_flags: string[];
+  red_flags: RedFlag[];
   explanation: string;
   active: boolean;
   created_at: Date;

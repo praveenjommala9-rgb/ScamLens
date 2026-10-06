@@ -8,6 +8,7 @@
 import type { AttemptSummaryResultLabel } from './attemptSummaryResultLabel';
 import type { Channel } from './channel';
 import type { Difficulty } from './difficulty';
+import type { ScenarioCategory } from './scenarioCategory';
 import type { SessionType } from './sessionType';
 
 export interface AttemptSummary {
@@ -16,7 +17,7 @@ export interface AttemptSummary {
   session_type: SessionType;
   scenario_title: string;
   channel: Channel;
-  category: string;
+  category: ScenarioCategory;
   difficulty: Difficulty;
   result_label: AttemptSummaryResultLabel;
   created_at: Date;

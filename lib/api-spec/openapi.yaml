@@ -532,6 +532,28 @@ components:
     Difficulty:
       type: string
       enum: [easy, medium, hard]
+    ScenarioCategory:
+      type: string
+      enum:
+        - Banking & Payment
+        - Account Takeover
+        - Delivery / Parcel
+        - Job & Recruitment
+        - Rewards & Promotions
+        - Impersonation
+        - Tech Support
+        - Password / Credential Reset
+    RedFlag:
+      type: string
+      enum:
+        - Urgency
+        - Suspicious link/domain
+        - Credential request
+        - Impersonation
+        - Threatening language
+        - Unusual sender
+        - Unrealistic reward
+        - Payment request
     Profile:
       type: object
       additionalProperties: false
@@ -603,7 +625,7 @@ components:
         channel:
           $ref: "#/components/schemas/Channel"
         category:
-          type: string
+          $ref: "#/components/schemas/ScenarioCategory"
         difficulty:
           $ref: "#/components/schemas/Difficulty"
         sender_name:
@@ -633,7 +655,7 @@ components:
       additionalProperties: false
       properties:
         category:
-          type: string
+          $ref: "#/components/schemas/ScenarioCategory"
         accuracy:
           type: integer
           minimum: 0
@@ -659,7 +681,7 @@ components:
         channel:
           $ref: "#/components/schemas/Channel"
         category:
-          type: string
+          $ref: "#/components/schemas/ScenarioCategory"
         difficulty:
           $ref: "#/components/schemas/Difficulty"
         result_label:
@@ -741,7 +763,7 @@ components:
         selected_red_flags:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/RedFlag"
         scenario:
           $ref: "#/components/schemas/SafeScenario"
         session:
@@ -778,8 +800,7 @@ components:
           type: array
           maxItems: 8
           items:
-            type: string
-            maxLength: 80
+            $ref: "#/components/schemas/RedFlag"
         response_time_ms:
           type: integer
           minimum: 0
@@ -872,7 +893,7 @@ components:
             red_flags:
               type: array
               items:
-                type: string
+                $ref: "#/components/schemas/RedFlag"
             explanation:
               type: string
             active:
@@ -895,7 +916,7 @@ components:
         channel:
           $ref: "#/components/schemas/Channel"
         category:
-          type: string
+          $ref: "#/components/schemas/ScenarioCategory"
           minLength: 1
           maxLength: 80
         difficulty:
@@ -920,11 +941,9 @@ components:
           $ref: "#/components/schemas/Answer"
         red_flags:
           type: array
-          minItems: 1
           maxItems: 8
           items:
-            type: string
-            maxLength: 80
+            $ref: "#/components/schemas/RedFlag"
         explanation:
           type: string
           minLength: 1
@@ -943,7 +962,7 @@ components:
         channel:
           $ref: "#/components/schemas/Channel"
         category:
-          type: string
+          $ref: "#/components/schemas/ScenarioCategory"
           minLength: 1
           maxLength: 80
         difficulty:
@@ -968,11 +987,9 @@ components:
           $ref: "#/components/schemas/Answer"
         red_flags:
           type: array
-          minItems: 1
           maxItems: 8
           items:
-            type: string
-            maxLength: 80
+            $ref: "#/components/schemas/RedFlag"
         explanation:
           type: string
           minLength: 1

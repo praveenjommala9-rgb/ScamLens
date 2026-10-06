@@ -102,7 +102,7 @@ export const GetDashboardResponse = zod.object({
   "completed_at": zod.coerce.date().nullable()
 }),zod.null()]),
   "category_performance": zod.array(zod.object({
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "accuracy": zod.number().int().min(getDashboardResponseCategoryPerformanceItemAccuracyMin).max(getDashboardResponseCategoryPerformanceItemAccuracyMax),
   "attempts": zod.number().int().min(getDashboardResponseCategoryPerformanceItemAttemptsMin)
 })),
@@ -114,7 +114,7 @@ export const GetDashboardResponse = zod.object({
   "session_type": zod.enum(['baseline', 'training', 'final']),
   "scenario_title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "result_label": zod.enum(['correct', 'incorrect', 'assessment_item']),
   "created_at": zod.coerce.date(),
@@ -138,7 +138,7 @@ export const GetProgressResponse = zod.object({
   "current_score": zod.number().int().nullable(),
   "improvement": zod.number().int().nullable(),
   "category_performance": zod.array(zod.object({
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "accuracy": zod.number().int().min(getProgressResponseCategoryPerformanceItemAccuracyMin).max(getProgressResponseCategoryPerformanceItemAccuracyMax),
   "attempts": zod.number().int().min(getProgressResponseCategoryPerformanceItemAttemptsMin)
 })),
@@ -207,7 +207,7 @@ export const GetNextScenarioResponse = zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -244,7 +244,7 @@ export const ListAttemptsResponseItem = zod.object({
   "session_type": zod.enum(['baseline', 'training', 'final']),
   "scenario_title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "result_label": zod.enum(['correct', 'incorrect', 'assessment_item']),
   "created_at": zod.coerce.date(),
@@ -256,8 +256,6 @@ export const ListAttemptsResponse = zod.array(ListAttemptsResponseItem)
 /**
  * @summary Submit an answer for the current session scenario
  */
-export const submitAttemptBodySelectedRedFlagsItemMax = 80;
-
 export const submitAttemptBodySelectedRedFlagsMax = 8;
 
 export const submitAttemptBodyResponseTimeMsMin = 0;
@@ -271,7 +269,7 @@ export const SubmitAttemptBody = zod.object({
   "session_id": zod.string().uuid(),
   "scenario_id": zod.string().uuid(),
   "answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "selected_red_flags": zod.array(zod.string().max(submitAttemptBodySelectedRedFlagsItemMax)).max(submitAttemptBodySelectedRedFlagsMax),
+  "selected_red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])).max(submitAttemptBodySelectedRedFlagsMax),
   "response_time_ms": zod.number().int().min(submitAttemptBodyResponseTimeMsMin).max(submitAttemptBodyResponseTimeMsMax),
   "reflection_note": zod.string().max(submitAttemptBodyReflectionNoteMax).optional()
 })
@@ -290,19 +288,19 @@ export const SubmitAttemptResponse = zod.object({
   "session_type": zod.enum(['baseline', 'training', 'final']),
   "scenario_title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "result_label": zod.enum(['correct', 'incorrect', 'assessment_item']),
   "created_at": zod.coerce.date(),
   "reflection_note": zod.string().nullable()
 }),
   "answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "selected_red_flags": zod.array(zod.string()),
+  "selected_red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "scenario": zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -339,7 +337,7 @@ export const SubmitAttemptResponse = zod.object({
   "final_score": zod.number().int(),
   "improvement": zod.number().int().nullable(),
   "category_performance": zod.array(zod.object({
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "accuracy": zod.number().int().min(submitAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMin).max(submitAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMax),
   "attempts": zod.number().int().min(submitAttemptResponseAssessmentOneCategoryPerformanceItemAttemptsMin)
 })),
@@ -372,19 +370,19 @@ export const GetAttemptResponse = zod.object({
   "session_type": zod.enum(['baseline', 'training', 'final']),
   "scenario_title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "result_label": zod.enum(['correct', 'incorrect', 'assessment_item']),
   "created_at": zod.coerce.date(),
   "reflection_note": zod.string().nullable()
 }),
   "answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "selected_red_flags": zod.array(zod.string()),
+  "selected_red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "scenario": zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -421,7 +419,7 @@ export const GetAttemptResponse = zod.object({
   "final_score": zod.number().int(),
   "improvement": zod.number().int().nullable(),
   "category_performance": zod.array(zod.object({
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "accuracy": zod.number().int().min(getAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMin).max(getAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMax),
   "attempts": zod.number().int().min(getAttemptResponseAssessmentOneCategoryPerformanceItemAttemptsMin)
 })),
@@ -462,19 +460,19 @@ export const UpdateAttemptResponse = zod.object({
   "session_type": zod.enum(['baseline', 'training', 'final']),
   "scenario_title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "result_label": zod.enum(['correct', 'incorrect', 'assessment_item']),
   "created_at": zod.coerce.date(),
   "reflection_note": zod.string().nullable()
 }),
   "answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "selected_red_flags": zod.array(zod.string()),
+  "selected_red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "scenario": zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -511,7 +509,7 @@ export const UpdateAttemptResponse = zod.object({
   "final_score": zod.number().int(),
   "improvement": zod.number().int().nullable(),
   "category_performance": zod.array(zod.object({
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "accuracy": zod.number().int().min(updateAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMin).max(updateAttemptResponseAssessmentOneCategoryPerformanceItemAccuracyMax),
   "attempts": zod.number().int().min(updateAttemptResponseAssessmentOneCategoryPerformanceItemAttemptsMin)
 })),
@@ -530,7 +528,7 @@ export const ListAdminScenariosResponseItem = zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -539,7 +537,7 @@ export const ListAdminScenariosResponseItem = zod.object({
   "displayed_url": zod.string().nullable()
 }).and(zod.object({
   "correct_answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "red_flags": zod.array(zod.string()),
+  "red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "explanation": zod.string(),
   "active": zod.boolean(),
   "created_at": zod.coerce.date(),
@@ -553,8 +551,6 @@ export const ListAdminScenariosResponse = zod.array(ListAdminScenariosResponseIt
  */
 export const createAdminScenarioBodyTitleMax = 150;
 
-export const createAdminScenarioBodyCategoryMax = 80;
-
 export const createAdminScenarioBodySenderNameMax = 120;
 
 export const createAdminScenarioBodySenderAddressMax = 254;
@@ -565,8 +561,6 @@ export const createAdminScenarioBodyBodyMax = 6000;
 
 export const createAdminScenarioBodyDisplayedUrlMax = 300;
 
-export const createAdminScenarioBodyRedFlagsItemMax = 80;
-
 export const createAdminScenarioBodyRedFlagsMax = 8;
 
 export const createAdminScenarioBodyExplanationMax = 1200;
@@ -576,7 +570,7 @@ export const createAdminScenarioBodyExplanationMax = 1200;
 export const CreateAdminScenarioBody = zod.object({
   "title": zod.string().min(1).max(createAdminScenarioBodyTitleMax),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string().min(1).max(createAdminScenarioBodyCategoryMax),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().max(createAdminScenarioBodySenderNameMax).nullable(),
   "sender_address": zod.string().max(createAdminScenarioBodySenderAddressMax).nullable(),
@@ -584,7 +578,7 @@ export const CreateAdminScenarioBody = zod.object({
   "body": zod.string().min(1).max(createAdminScenarioBodyBodyMax),
   "displayed_url": zod.string().max(createAdminScenarioBodyDisplayedUrlMax).nullable(),
   "correct_answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "red_flags": zod.array(zod.string().max(createAdminScenarioBodyRedFlagsItemMax)).min(1).max(createAdminScenarioBodyRedFlagsMax),
+  "red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])).max(createAdminScenarioBodyRedFlagsMax),
   "explanation": zod.string().min(1).max(createAdminScenarioBodyExplanationMax),
   "active": zod.boolean()
 })
@@ -593,7 +587,7 @@ export const CreateAdminScenarioResponse = zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -602,7 +596,7 @@ export const CreateAdminScenarioResponse = zod.object({
   "displayed_url": zod.string().nullable()
 }).and(zod.object({
   "correct_answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "red_flags": zod.array(zod.string()),
+  "red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "explanation": zod.string(),
   "active": zod.boolean(),
   "created_at": zod.coerce.date(),
@@ -619,8 +613,6 @@ export const UpdateAdminScenarioParams = zod.object({
 
 export const updateAdminScenarioBodyTitleMax = 150;
 
-export const updateAdminScenarioBodyCategoryMax = 80;
-
 export const updateAdminScenarioBodySenderNameMax = 120;
 
 export const updateAdminScenarioBodySenderAddressMax = 254;
@@ -631,8 +623,6 @@ export const updateAdminScenarioBodyBodyMax = 6000;
 
 export const updateAdminScenarioBodyDisplayedUrlMax = 300;
 
-export const updateAdminScenarioBodyRedFlagsItemMax = 80;
-
 export const updateAdminScenarioBodyRedFlagsMax = 8;
 
 export const updateAdminScenarioBodyExplanationMax = 1200;
@@ -642,7 +632,7 @@ export const updateAdminScenarioBodyExplanationMax = 1200;
 export const UpdateAdminScenarioBody = zod.object({
   "title": zod.string().min(1).max(updateAdminScenarioBodyTitleMax).optional(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']).optional(),
-  "category": zod.string().min(1).max(updateAdminScenarioBodyCategoryMax).optional(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']).optional(),
   "difficulty": zod.enum(['easy', 'medium', 'hard']).optional(),
   "sender_name": zod.string().max(updateAdminScenarioBodySenderNameMax).nullish(),
   "sender_address": zod.string().max(updateAdminScenarioBodySenderAddressMax).nullish(),
@@ -650,7 +640,7 @@ export const UpdateAdminScenarioBody = zod.object({
   "body": zod.string().min(1).max(updateAdminScenarioBodyBodyMax).optional(),
   "displayed_url": zod.string().max(updateAdminScenarioBodyDisplayedUrlMax).nullish(),
   "correct_answer": zod.enum(['phishing', 'legitimate', 'unsure']).optional(),
-  "red_flags": zod.array(zod.string().max(updateAdminScenarioBodyRedFlagsItemMax)).min(1).max(updateAdminScenarioBodyRedFlagsMax).optional(),
+  "red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])).max(updateAdminScenarioBodyRedFlagsMax).optional(),
   "explanation": zod.string().min(1).max(updateAdminScenarioBodyExplanationMax).optional(),
   "active": zod.boolean().optional()
 })
@@ -659,7 +649,7 @@ export const UpdateAdminScenarioResponse = zod.object({
   "id": zod.string().uuid(),
   "title": zod.string(),
   "channel": zod.enum(['email', 'sms', 'chat', 'social', 'login']),
-  "category": zod.string(),
+  "category": zod.enum(['Banking & Payment', 'Account Takeover', 'Delivery / Parcel', 'Job & Recruitment', 'Rewards & Promotions', 'Impersonation', 'Tech Support', 'Password / Credential Reset']),
   "difficulty": zod.enum(['easy', 'medium', 'hard']),
   "sender_name": zod.string().nullable(),
   "sender_address": zod.string().nullable(),
@@ -668,7 +658,7 @@ export const UpdateAdminScenarioResponse = zod.object({
   "displayed_url": zod.string().nullable()
 }).and(zod.object({
   "correct_answer": zod.enum(['phishing', 'legitimate', 'unsure']),
-  "red_flags": zod.array(zod.string()),
+  "red_flags": zod.array(zod.enum(['Urgency', 'Suspicious link/domain', 'Credential request', 'Impersonation', 'Threatening language', 'Unusual sender', 'Unrealistic reward', 'Payment request'])),
   "explanation": zod.string(),
   "active": zod.boolean(),
   "created_at": zod.coerce.date(),

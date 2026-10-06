@@ -6,16 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Answer } from './answer';
+import type { RedFlag } from './redFlag';
 
 export interface AttemptInput {
   session_id: string;
   scenario_id: string;
   answer: Answer;
-  /**
-     * @maxItems 8
-     * @items.maxLength 80
-     */
-  selected_red_flags: string[];
+  /** @maxItems 8 */
+  selected_red_flags: RedFlag[];
   /**
      * @minimum 0
      * @maximum 3600000

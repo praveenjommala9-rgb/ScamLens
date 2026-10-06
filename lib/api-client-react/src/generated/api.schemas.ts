@@ -77,6 +77,34 @@ export const Difficulty = {
   hard: 'hard',
 } as const;
 
+export type ScenarioCategory = typeof ScenarioCategory[keyof typeof ScenarioCategory];
+
+
+export const ScenarioCategory = {
+  'Banking_&_Payment': 'Banking & Payment',
+  Account_Takeover: 'Account Takeover',
+  'Delivery_/_Parcel': 'Delivery / Parcel',
+  'Job_&_Recruitment': 'Job & Recruitment',
+  'Rewards_&_Promotions': 'Rewards & Promotions',
+  Impersonation: 'Impersonation',
+  Tech_Support: 'Tech Support',
+  'Password_/_Credential_Reset': 'Password / Credential Reset',
+} as const;
+
+export type RedFlag = typeof RedFlag[keyof typeof RedFlag];
+
+
+export const RedFlag = {
+  Urgency: 'Urgency',
+  'Suspicious_link/domain': 'Suspicious link/domain',
+  Credential_request: 'Credential request',
+  Impersonation: 'Impersonation',
+  Threatening_language: 'Threatening language',
+  Unusual_sender: 'Unusual sender',
+  Unrealistic_reward: 'Unrealistic reward',
+  Payment_request: 'Payment request',
+} as const;
+
 export type ProfileRole = typeof ProfileRole[keyof typeof ProfileRole];
 
 
@@ -122,7 +150,7 @@ export interface SafeScenario {
   id: string;
   title: string;
   channel: Channel;
-  category: string;
+  category: ScenarioCategory;
   difficulty: Difficulty;
   /** @nullable */
   sender_name: string | null;
@@ -141,7 +169,7 @@ export interface NextScenarioResponse {
 }
 
 export interface CategoryPerformance {
-  category: string;
+  category: ScenarioCategory;
   /**
      * @minimum 0
      * @maximum 100
@@ -166,7 +194,7 @@ export interface AttemptSummary {
   session_type: SessionType;
   scenario_title: string;
   channel: Channel;
-  category: string;
+  category: ScenarioCategory;
   difficulty: Difficulty;
   result_label: AttemptSummaryResultLabel;
   created_at: string;
@@ -216,7 +244,7 @@ export const AttemptDetailAiStatus = {
 export interface AttemptDetail {
   attempt: AttemptSummary;
   answer: Answer;
-  selected_red_flags: string[];
+  selected_red_flags: RedFlag[];
   scenario: SafeScenario;
   session: Session;
   grading: AttemptGrading | null;
@@ -229,11 +257,8 @@ export interface AttemptInput {
   session_id: string;
   scenario_id: string;
   answer: Answer;
-  /**
-     * @maxItems 8
-     * @items.maxLength 80
-     */
-  selected_red_flags: string[];
+  /** @maxItems 8 */
+  selected_red_flags: RedFlag[];
   /**
      * @minimum 0
      * @maximum 3600000
@@ -289,7 +314,7 @@ export interface ProgressSummary {
 
 export type AdminScenario = SafeScenario & {
   correct_answer: Answer;
-  red_flags: string[];
+  red_flags: RedFlag[];
   explanation: string;
   active: boolean;
   created_at: string;
@@ -307,7 +332,7 @@ export interface ScenarioInput {
      * @minLength 1
      * @maxLength 80
      */
-  category: string;
+  category: ScenarioCategory;
   difficulty: Difficulty;
   /**
      * @maxLength 120
@@ -335,12 +360,8 @@ export interface ScenarioInput {
      */
   displayed_url: string | null;
   correct_answer: Answer;
-  /**
-     * @minItems 1
-     * @maxItems 8
-     * @items.maxLength 80
-     */
-  red_flags: string[];
+  /** @maxItems 8 */
+  red_flags: RedFlag[];
   /**
      * @minLength 1
      * @maxLength 1200
@@ -360,7 +381,7 @@ export interface ScenarioUpdate {
      * @minLength 1
      * @maxLength 80
      */
-  category?: string;
+  category?: ScenarioCategory;
   difficulty?: Difficulty;
   /**
      * @maxLength 120
@@ -388,12 +409,8 @@ export interface ScenarioUpdate {
      */
   displayed_url?: string | null;
   correct_answer?: Answer;
-  /**
-     * @minItems 1
-     * @maxItems 8
-     * @items.maxLength 80
-     */
-  red_flags?: string[];
+  /** @maxItems 8 */
+  red_flags?: RedFlag[];
   /**
      * @minLength 1
      * @maxLength 1200

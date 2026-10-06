@@ -8,6 +8,8 @@
 import type { Answer } from './answer';
 import type { Channel } from './channel';
 import type { Difficulty } from './difficulty';
+import type { RedFlag } from './redFlag';
+import type { ScenarioCategory } from './scenarioCategory';
 
 export interface ScenarioUpdate {
   /**
@@ -20,7 +22,7 @@ export interface ScenarioUpdate {
      * @minLength 1
      * @maxLength 80
      */
-  category?: string;
+  category?: ScenarioCategory;
   difficulty?: Difficulty;
   /**
      * @maxLength 120
@@ -48,12 +50,8 @@ export interface ScenarioUpdate {
      */
   displayed_url?: string | null;
   correct_answer?: Answer;
-  /**
-     * @minItems 1
-     * @maxItems 8
-     * @items.maxLength 80
-     */
-  red_flags?: string[];
+  /** @maxItems 8 */
+  red_flags?: RedFlag[];
   /**
      * @minLength 1
      * @maxLength 1200

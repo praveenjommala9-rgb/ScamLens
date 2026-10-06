@@ -11,13 +11,14 @@ import type { AssessmentReport } from './assessmentReport';
 import type { AttemptDetailAiStatus } from './attemptDetailAiStatus';
 import type { AttemptGrading } from './attemptGrading';
 import type { AttemptSummary } from './attemptSummary';
+import type { RedFlag } from './redFlag';
 import type { SafeScenario } from './safeScenario';
 import type { Session } from './session';
 
 export interface AttemptDetail {
   attempt: AttemptSummary;
   answer: Answer;
-  selected_red_flags: string[];
+  selected_red_flags: RedFlag[];
   scenario: SafeScenario;
   session: Session;
   grading: AttemptGrading | null;

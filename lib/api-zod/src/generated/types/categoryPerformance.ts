@@ -5,9 +5,10 @@
  * ScamLens phishing-awareness training API
  * OpenAPI spec version: 0.1.0
  */
+import type { ScenarioCategory } from './scenarioCategory';
 
 export interface CategoryPerformance {
-  category: string;
+  category: ScenarioCategory;
   /**
      * @minimum 0
      * @maximum 100

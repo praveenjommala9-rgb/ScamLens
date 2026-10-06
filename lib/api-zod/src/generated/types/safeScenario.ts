@@ -7,12 +7,13 @@
  */
 import type { Channel } from './channel';
 import type { Difficulty } from './difficulty';
+import type { ScenarioCategory } from './scenarioCategory';
 
 export interface SafeScenario {
   id: string;
   title: string;
   channel: Channel;
-  category: string;
+  category: ScenarioCategory;
   difficulty: Difficulty;
   /** @nullable */
   sender_name: string | null;
