@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ScamLens phishing-awareness training API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+    description: Health and public app configuration
+  - name: profile
+    description: Authenticated user profile
+  - name: progress
+    description: Dashboard and progress summaries
+  - name: sessions
+    description: Baseline, training, and final-assessment sessions
+  - name: attempts
+    description: User-owned scenario attempts and feedback
+  - name: admin
+    description: Server-authorized scenario management
 paths:
   /healthz:
     get:
@@ -24,13 +34,949 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /health:
+    get:
+      operationId: getHealth
+      tags: [health]
+      summary: Check API health
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /config:
+    get:
+      operationId: getAppConfig
+      tags: [health]
+      summary: Get public browser configuration
+      responses:
+        "200":
+          description: Public configuration used to initialize Supabase Auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppConfig"
+        "503":
+          description: Required public configuration is missing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me:
+    get:
+      operationId: getMe
+      tags: [profile]
+      summary: Get the authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateMe
+      tags: [profile]
+      summary: Update profile basics
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [progress]
+      summary: Get dashboard metrics and recent attempts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /progress:
+    get:
+      operationId: getProgress
+      tags: [progress]
+      summary: Get category performance and assessment improvement
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sessions:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Start a baseline, adaptive training, or final session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Session cannot be started in the current assessment state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get one owned session
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /sessions/{id}/next:
+    get:
+      operationId: getNextScenario
+      tags: [sessions]
+      summary: Get the next safe scenario in an owned session
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Current session and safe scenario, or null scenario when complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextScenarioResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /attempts:
+    get:
+      operationId: listAttempts
+      tags: [attempts]
+      summary: List and filter the authenticated user's attempts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+        - name: channel
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Channel"
+        - name: session_type
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SessionType"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Filtered attempt history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttemptSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: submitAttempt
+      tags: [attempts]
+      summary: Submit an answer for the current session scenario
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttemptInput"
+      responses:
+        "201":
+          description: Server-graded attempt and mode-appropriate feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Scenario already answered or session is complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /attempts/{id}:
+    get:
+      operationId: getAttempt
+      tags: [attempts]
+      summary: Get one owned attempt and its permitted feedback
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Attempt detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateAttempt
+      tags: [attempts]
+      summary: Update only a personal reflection note
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttemptUpdate"
+      responses:
+        "200":
+          description: Updated attempt detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/scenarios:
+    get:
+      operationId: listAdminScenarios
+      tags: [admin]
+      summary: List scenarios for administrators
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Scenario library including answer keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminScenario"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createAdminScenario
+      tags: [admin]
+      summary: Create a scenario
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioInput"
+      responses:
+        "201":
+          description: Created scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminScenario"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /admin/scenarios/{id}:
+    patch:
+      operationId: updateAdminScenario
+      tags: [admin]
+      summary: Update a scenario
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioUpdate"
+      responses:
+        "200":
+          description: Updated scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminScenario"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    delete:
+      operationId: deleteAdminScenario
+      tags: [admin]
+      summary: Deactivate a scenario without deleting attempt history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Scenario deactivated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient permission
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     HealthStatus:
       type: object
+      additionalProperties: false
       properties:
         status:
           type: string
-      required:
-        - status
+          enum: [ok]
+      required: [status]
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]
+      required: [error]
+    AppConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        supabaseUrl:
+          type: string
+          format: uri
+        supabasePublishableKey:
+          type: string
+          minLength: 1
+      required: [supabaseUrl, supabasePublishableKey]
+    SessionType:
+      type: string
+      enum: [baseline, training, final]
+    SessionStatus:
+      type: string
+      enum: [in_progress, completed]
+    Answer:
+      type: string
+      enum: [phishing, legitimate, unsure]
+    Channel:
+      type: string
+      enum: [email, sms, chat, social, login]
+    Difficulty:
+      type: string
+      enum: [easy, medium, hard]
+    Profile:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, full_name, role, created_at, updated_at]
+    ProfileUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required: [full_name]
+    SessionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          $ref: "#/components/schemas/SessionType"
+      required: [type]
+    Session:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/SessionType"
+        status:
+          $ref: "#/components/schemas/SessionStatus"
+        total_questions:
+          type: integer
+        answered_questions:
+          type: integer
+        score:
+          type: [integer, "null"]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: [string, "null"]
+          format: date-time
+      required: [id, type, status, total_questions, answered_questions, score, started_at, completed_at]
+    SafeScenario:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        channel:
+          $ref: "#/components/schemas/Channel"
+        category:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/Difficulty"
+        sender_name:
+          type: [string, "null"]
+        sender_address:
+          type: [string, "null"]
+        subject:
+          type: [string, "null"]
+        body:
+          type: string
+        displayed_url:
+          type: [string, "null"]
+      required: [id, title, channel, category, difficulty, sender_name, sender_address, subject, body, displayed_url]
+    NextScenarioResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        session:
+          $ref: "#/components/schemas/Session"
+        scenario:
+          oneOf:
+            - $ref: "#/components/schemas/SafeScenario"
+            - type: "null"
+      required: [session, scenario]
+    CategoryPerformance:
+      type: object
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        accuracy:
+          type: integer
+          minimum: 0
+          maximum: 100
+        attempts:
+          type: integer
+          minimum: 0
+      required: [category, accuracy, attempts]
+    AttemptSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        session_type:
+          $ref: "#/components/schemas/SessionType"
+        scenario_title:
+          type: string
+        channel:
+          $ref: "#/components/schemas/Channel"
+        category:
+          type: string
+        difficulty:
+          $ref: "#/components/schemas/Difficulty"
+        result_label:
+          type: string
+          enum: [correct, incorrect, assessment_item]
+        created_at:
+          type: string
+          format: date-time
+        reflection_note:
+          type: [string, "null"]
+      required: [id, session_id, session_type, scenario_title, channel, category, difficulty, result_label, created_at, reflection_note]
+    AiFeedback:
+      type: object
+      additionalProperties: false
+      properties:
+        coaching_summary:
+          type: string
+        what_you_did_well:
+          type: array
+          items:
+            type: string
+        missed_signals:
+          type: array
+          items:
+            type: string
+        next_rule:
+          type: string
+        focus_category:
+          type: string
+      required: [coaching_summary, what_you_did_well, missed_signals, next_rule, focus_category]
+    AttemptGrading:
+      type: object
+      additionalProperties: false
+      properties:
+        is_correct:
+          type: boolean
+        explanation:
+          type: string
+        detected_red_flags:
+          type: array
+          items:
+            type: string
+        missed_signals:
+          type: array
+          items:
+            type: string
+      required: [is_correct, explanation, detected_red_flags, missed_signals]
+    AssessmentReport:
+      type: object
+      additionalProperties: false
+      properties:
+        baseline_score:
+          type: [integer, "null"]
+        final_score:
+          type: integer
+        improvement:
+          type: [integer, "null"]
+        category_performance:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryPerformance"
+        strongest_category:
+          type: [string, "null"]
+        weakest_category:
+          type: [string, "null"]
+        scenarios_completed:
+          type: integer
+        explanation:
+          type: string
+      required: [baseline_score, final_score, improvement, category_performance, strongest_category, weakest_category, scenarios_completed, explanation]
+    AttemptDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        attempt:
+          $ref: "#/components/schemas/AttemptSummary"
+        answer:
+          $ref: "#/components/schemas/Answer"
+        selected_red_flags:
+          type: array
+          items:
+            type: string
+        scenario:
+          $ref: "#/components/schemas/SafeScenario"
+        session:
+          $ref: "#/components/schemas/Session"
+        grading:
+          oneOf:
+            - $ref: "#/components/schemas/AttemptGrading"
+            - type: "null"
+        feedback:
+          oneOf:
+            - $ref: "#/components/schemas/AiFeedback"
+            - type: "null"
+        ai_status:
+          type: string
+          enum: [available, unavailable, not_applicable]
+        assessment:
+          oneOf:
+            - $ref: "#/components/schemas/AssessmentReport"
+            - type: "null"
+      required: [attempt, answer, selected_red_flags, scenario, session, grading, feedback, ai_status, assessment]
+    AttemptInput:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        scenario_id:
+          type: string
+          format: uuid
+        answer:
+          $ref: "#/components/schemas/Answer"
+        selected_red_flags:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            maxLength: 80
+        response_time_ms:
+          type: integer
+          minimum: 0
+          maximum: 3600000
+        reflection_note:
+          type: string
+          maxLength: 1000
+      required: [session_id, scenario_id, answer, selected_red_flags, response_time_ms]
+    AttemptUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        reflection_note:
+          type: [string, "null"]
+          maxLength: 1000
+      required: [reflection_note]
+    DashboardSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        awareness_score:
+          type: [integer, "null"]
+        baseline_score:
+          type: [integer, "null"]
+        current_score:
+          type: [integer, "null"]
+        improvement:
+          type: [integer, "null"]
+        scenarios_completed:
+          type: integer
+        total_attempts:
+          type: integer
+        total_completed_sessions:
+          type: integer
+        total_correct:
+          type: integer
+        overall_accuracy:
+          type: [integer, "null"]
+        has_baseline:
+          type: boolean
+        has_final:
+          type: boolean
+        active_session:
+          oneOf:
+            - $ref: "#/components/schemas/Session"
+            - type: "null"
+        category_performance:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryPerformance"
+        strengths:
+          type: array
+          items:
+            type: string
+        weak_areas:
+          type: array
+          items:
+            type: string
+        recent_attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptSummary"
+      required: [awareness_score, baseline_score, current_score, improvement, scenarios_completed, total_attempts, total_completed_sessions, total_correct, overall_accuracy, has_baseline, has_final, active_session, category_performance, strengths, weak_areas, recent_attempts]
+    ProgressSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        baseline_score:
+          type: [integer, "null"]
+        current_score:
+          type: [integer, "null"]
+        improvement:
+          type: [integer, "null"]
+        category_performance:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryPerformance"
+        completed_sessions:
+          type: integer
+        total_attempts:
+          type: integer
+      required: [baseline_score, current_score, improvement, category_performance, completed_sessions, total_attempts]
+    AdminScenario:
+      allOf:
+        - $ref: "#/components/schemas/SafeScenario"
+        - type: object
+          properties:
+            correct_answer:
+              $ref: "#/components/schemas/Answer"
+            red_flags:
+              type: array
+              items:
+                type: string
+            explanation:
+              type: string
+            active:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+          required: [correct_answer, red_flags, explanation, active, created_at, updated_at]
+    ScenarioInput:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        channel:
+          $ref: "#/components/schemas/Channel"
+        category:
+          type: string
+          minLength: 1
+          maxLength: 80
+        difficulty:
+          $ref: "#/components/schemas/Difficulty"
+        sender_name:
+          type: [string, "null"]
+          maxLength: 120
+        sender_address:
+          type: [string, "null"]
+          maxLength: 254
+        subject:
+          type: [string, "null"]
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 6000
+        displayed_url:
+          type: [string, "null"]
+          maxLength: 300
+        correct_answer:
+          $ref: "#/components/schemas/Answer"
+        red_flags:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            maxLength: 80
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1200
+        active:
+          type: boolean
+      required: [title, channel, category, difficulty, sender_name, sender_address, subject, body, displayed_url, correct_answer, red_flags, explanation, active]
+    ScenarioUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        channel:
+          $ref: "#/components/schemas/Channel"
+        category:
+          type: string
+          minLength: 1
+          maxLength: 80
+        difficulty:
+          $ref: "#/components/schemas/Difficulty"
+        sender_name:
+          type: [string, "null"]
+          maxLength: 120
+        sender_address:
+          type: [string, "null"]
+          maxLength: 254
+        subject:
+          type: [string, "null"]
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 6000
+        displayed_url:
+          type: [string, "null"]
+          maxLength: 300
+        correct_answer:
+          $ref: "#/components/schemas/Answer"
+        red_flags:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            maxLength: 80
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1200
+        active:
+          type: boolean
 
