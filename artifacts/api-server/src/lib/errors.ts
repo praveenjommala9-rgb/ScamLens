@@ -54,7 +54,12 @@ export function apiErrorHandler(): ErrorRequestHandler {
       return;
     }
 
-    req.log.error({ err: error }, "Unhandled API error");
+    req.log.error(
+      {
+        errorName: error instanceof Error ? error.name : "UnknownError",
+      },
+      "Unhandled API error",
+    );
     res.status(500).json(
       ErrorResponseSchema.parse({
         error: { code: "INTERNAL_ERROR", message: "An unexpected server error occurred." },

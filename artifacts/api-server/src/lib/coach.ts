@@ -5,7 +5,7 @@ import { SCENARIO_CATEGORIES, type AttemptRow, type RedFlag, type ScenarioRow } 
 import type { DeterministicGrade } from "./grading";
 import { logger } from "./logger";
 
-export const GEMINI_MODEL = "gemini-2.5-flash";
+export const GEMINI_MODEL = "gemini-3.5-flash";
 
 export const CoachFeedbackSchema = z
   .object({
@@ -22,6 +22,25 @@ export interface CoachContext {
   attempt: AttemptRow;
   grade: DeterministicGrade;
   weakCategories: string[];
+}
+
+export function validateCoachFeedback(
+  value: unknown,
+  category: ScenarioRow["category"],
+  detectedFlags: RedFlag[],
+  missedFlags: RedFlag[],
+): AiFeedback | null {
+  const parsed = CoachFeedbackSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const feedback = parsed.data;
+  if (
+    feedback.focus_category !== category ||
+    !mentionsOnlyProvidedFlags(feedback.what_you_did_well, detectedFlags) ||
+    !mentionsOnlyProvidedFlags(feedback.missed_signals, missedFlags)
+  ) {
+    return null;
+  }
+  return feedback;
 }
 
 function mentionsOnlyProvidedFlags(
@@ -67,6 +86,7 @@ export async function generateCoachFeedback(
       }),
       config: {
         abortSignal: AbortSignal.timeout(20_000),
+        maxOutputTokens: 300,
         temperature: 0.2,
         responseMimeType: "application/json",
         responseJsonSchema: {
@@ -117,28 +137,53 @@ export async function generateCoachFeedback(
     });
 
     const text = response.text;
-    if (!text) return null;
-    const feedback = CoachFeedbackSchema.parse(JSON.parse(text));
-    if (
-      feedback.focus_category !== context.scenario.category ||
-      !mentionsOnlyProvidedFlags(
-        feedback.what_you_did_well,
-        context.grade.detected_red_flags,
-      ) ||
-      !mentionsOnlyProvidedFlags(
-        feedback.missed_signals,
-        context.grade.missed_signals,
-      )
-    ) {
+    if (!text) {
+      logger.warn(
+        { provider: "gemini", model: GEMINI_MODEL, reason: "empty_response" },
+        "AI coaching response was unusable",
+      );
       return null;
+    }
+
+    let value: unknown;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      logger.warn(
+        { provider: "gemini", model: GEMINI_MODEL, reason: "invalid_json" },
+        "AI coaching response was unusable",
+      );
+      return null;
+    }
+
+    const feedback = validateCoachFeedback(
+      value,
+      context.scenario.category,
+      context.grade.detected_red_flags,
+      context.grade.missed_signals,
+    );
+    if (!feedback) {
+      logger.warn(
+        {
+          provider: "gemini",
+          model: GEMINI_MODEL,
+          reason: "response_validation_failed",
+        },
+        "AI coaching response was unusable",
+      );
     }
     return feedback;
   } catch (error) {
+    const providerStatus =
+      error && typeof error === "object" && "status" in error
+        ? String(error.status).slice(0, 32)
+        : undefined;
     logger.warn(
       {
         provider: "gemini",
         model: GEMINI_MODEL,
         errorName: error instanceof Error ? error.name : "UnknownError",
+        providerStatus,
       },
       "AI coaching unavailable for this attempt",
     );

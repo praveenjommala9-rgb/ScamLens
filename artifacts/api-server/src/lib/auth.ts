@@ -42,7 +42,12 @@ export async function authenticate(
       next(error);
       return;
     }
-    req.log.error({ err: error }, "Authentication provider request failed");
+    req.log.error(
+      {
+        errorName: error instanceof Error ? error.name : "UnknownError",
+      },
+      "Authentication provider request failed",
+    );
     next(new HttpError(503, "AUTH_UNAVAILABLE", "Authentication is temporarily unavailable."));
   }
 }

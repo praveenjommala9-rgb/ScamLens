@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import rateLimit from "express-rate-limit";
 import {
   GetAttemptParams,
   GetAttemptResponse,
@@ -11,7 +12,7 @@ import {
   UpdateAttemptResponse,
 } from "@workspace/api-zod";
 import { z } from "zod";
-import { summarizeCategoryStats } from "../lib/adaptive";
+import { summarizeRecentCategoryStats } from "../lib/adaptive";
 import { authenticate, getRequestAuth } from "../lib/auth";
 import {
   CoachFeedbackSchema,
@@ -26,7 +27,11 @@ import {
   type ScenarioRow,
   type SessionRow,
 } from "../lib/database.types";
-import { HttpError, throwIfSupabaseError } from "../lib/errors";
+import {
+  ErrorResponseSchema,
+  HttpError,
+  throwIfSupabaseError,
+} from "../lib/errors";
 import { gradeScenario } from "../lib/grading";
 import {
   assessmentReport,
@@ -44,6 +49,23 @@ import {
 
 const router: IRouter = Router();
 router.use(authenticate);
+const attemptSubmitLimit = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => req.auth?.userId ?? "unauthenticated",
+  handler: (_req, res) => {
+    res.status(429).json(
+      ErrorResponseSchema.parse({
+        error: {
+          code: "RATE_LIMITED",
+          message: "Too many responses were submitted. Wait a moment and try again.",
+        },
+      }),
+    );
+  },
+});
 
 const CommitResultSchema = z.object({
   attempt: z.object({
@@ -215,7 +237,7 @@ router.get("/attempts", async (req, res): Promise<void> => {
   res.json(ListAttemptsResponse.parse(filtered));
 });
 
-router.post("/attempts", async (req, res): Promise<void> => {
+router.post("/attempts", attemptSubmitLimit, async (req, res): Promise<void> => {
   const auth = getRequestAuth(req);
   const input = SubmitAttemptBody.parse(req.body);
   const userClient = createUserSupabaseClient(auth.token);
@@ -286,9 +308,8 @@ router.post("/attempts", async (req, res): Promise<void> => {
 
   if (updatedSession.type === "training") {
     const progress = await loadUserProgressData(auth.userId, auth.token);
-    const recent = progress.attempts.slice(0, 20);
-    const stats = summarizeCategoryStats(
-      recent.map((item) => ({
+    const stats = summarizeRecentCategoryStats(
+      progress.attempts.map((item) => ({
         category: item.scenario.category,
         is_correct: item.attempt.is_correct,
       })),
@@ -364,8 +385,8 @@ router.patch("/attempts/:id", async (req, res): Promise<void> => {
   const auth = getRequestAuth(req);
   const params = UpdateAttemptParams.parse(req.params);
   const input = UpdateAttemptBody.parse(req.body);
-  const client = createUserSupabaseClient(auth.token);
-  const { data: ownedAttempt, error: attemptError } = await client
+  const service = getSupabaseServiceClient();
+  const { data: ownedAttempt, error: attemptError } = await service
     .from("attempts")
     .select("id")
     .eq("id", params.id)
@@ -376,7 +397,7 @@ router.patch("/attempts/:id", async (req, res): Promise<void> => {
     throw new HttpError(404, "NOT_FOUND", "The requested response was not found.");
   }
 
-  const { error: updateError } = await getSupabaseServiceClient()
+  const { error: updateError } = await service
     .from("attempts")
     .update({ reflection_note: input.reflection_note })
     .eq("id", params.id)

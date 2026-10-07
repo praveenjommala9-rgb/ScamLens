@@ -15,6 +15,25 @@ export type ScenarioCandidate = Pick<
   "id" | "title" | "category" | "difficulty" | "active"
 >;
 
+export function summarizeRecentCategoryStats(
+  rows: Array<{ category: ScenarioCategory; is_correct: boolean }>,
+  sampleSize = 3,
+): CategoryStat[] {
+  return SCENARIO_CATEGORIES.map((category) => {
+    const recent = rows
+      .filter((row) => row.category === category)
+      .slice(0, Math.max(0, sampleSize));
+    const correct = recent.filter((row) => row.is_correct).length;
+    return {
+      category,
+      accuracy: recent.length
+        ? Math.round((correct / recent.length) * 100)
+        : 50,
+      attempts: recent.length,
+    };
+  });
+}
+
 const difficultyRank: Record<ScenarioRow["difficulty"], number> = {
   easy: 0,
   medium: 1,
@@ -55,9 +74,6 @@ function categoryOrder(stats: CategoryStat[]): CategoryStat[] {
     const leftBand = left.accuracy < 60 ? 0 : left.accuracy <= 80 ? 1 : 2;
     const rightBand = right.accuracy < 60 ? 0 : right.accuracy <= 80 ? 1 : 2;
     if (leftBand !== rightBand) return leftBand - rightBand;
-    if (leftBand === 2 && left.accuracy !== right.accuracy) {
-      return right.accuracy - left.accuracy;
-    }
     return left.accuracy - right.accuracy || left.category.localeCompare(right.category);
   });
 }
@@ -107,7 +123,7 @@ export function chooseAdaptiveTrainingScenarios(
     const candidates = orderedCandidates(
       scenarios,
       stat.category,
-      stat.accuracy,
+      stat.attempts >= 3 ? stat.accuracy : Math.min(stat.accuracy, 80),
       recentScenarioIds,
     );
     for (const candidate of candidates) {

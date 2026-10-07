@@ -18,7 +18,10 @@ import type {
 import { summarizeCategoryStats } from "./adaptive";
 import { calculateScore } from "./grading";
 import { HttpError, throwIfSupabaseError } from "./errors";
-import { createUserSupabaseClient } from "./supabase";
+import {
+  createUserSupabaseClient,
+  getSupabaseServiceClient,
+} from "./supabase";
 
 export interface ScenarioDisplay {
   id: string;
@@ -97,14 +100,15 @@ export async function loadUserProgressData(
   token: string,
 ): Promise<UserProgressData> {
   const client = createUserSupabaseClient(token);
+  const service = getSupabaseServiceClient();
   const [sessionResult, attemptResult] = await Promise.all([
-    client
+    service
       .from("sessions")
       .select("*")
       .eq("user_id", userId)
       .order("started_at", { ascending: false })
       .limit(200),
-    client
+    service
       .from("attempts")
       .select("*")
       .eq("user_id", userId)

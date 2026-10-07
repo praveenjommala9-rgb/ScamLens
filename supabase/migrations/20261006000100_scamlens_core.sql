@@ -110,6 +110,9 @@ create index if not exists scenarios_channel_idx
   on public.scenarios (channel);
 create index if not exists sessions_user_started_idx
   on public.sessions (user_id, started_at desc);
+create unique index if not exists sessions_one_in_progress_per_user_idx
+  on public.sessions (user_id)
+  where status = 'in_progress';
 create index if not exists attempts_user_created_idx
   on public.attempts (user_id, created_at desc);
 create index if not exists attempts_session_idx
@@ -174,7 +177,7 @@ create or replace function public.submit_scam_attempt(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_session public.sessions%rowtype;
@@ -310,7 +313,7 @@ create policy attempts_select_permitted_own on public.attempts
         from public.sessions s
        where s.id = attempts.session_id
          and s.user_id = (select auth.uid())
-         and (s.type = 'training' or s.status = 'completed')
+          and s.type = 'training'
     )
   );
 

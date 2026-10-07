@@ -10,7 +10,7 @@ import {
 import {
   chooseAdaptiveTrainingScenarios,
   chooseBalancedAssessmentScenarios,
-  summarizeCategoryStats,
+  summarizeRecentCategoryStats,
 } from "../lib/adaptive";
 import { authenticate, getRequestAuth } from "../lib/auth";
 import {
@@ -85,7 +85,7 @@ router.post("/sessions", async (req, res): Promise<void> => {
         QUESTION_COUNT,
       );
     } else {
-      const categoryStats = summarizeCategoryStats(
+      const categoryStats = summarizeRecentCategoryStats(
         attempts.map((item) => ({
           category: item.scenario.category,
           is_correct: item.attempt.is_correct,
@@ -124,6 +124,13 @@ router.post("/sessions", async (req, res): Promise<void> => {
     })
     .select("*")
     .single();
+  if (error?.code === "23505") {
+    throw new HttpError(
+      409,
+      "SESSION_IN_PROGRESS",
+      "Finish your active session before starting another.",
+    );
+  }
   throwIfSupabaseError(error);
   if (!data) {
     throw new HttpError(503, "SESSION_CREATE_FAILED", "Your session could not be created.");
